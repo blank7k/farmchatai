@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertFarmerSchema, insertChatMessageSchema, insertSuggestionSchema } from "@shared/schema";
+import { getDistrictByValue } from "../client/src/lib/kerala-data";
 import OpenAI from "openai";
 
 const openai = new OpenAI({ 
@@ -297,22 +298,162 @@ function getKeralaSeason(month: number): string {
 }
 
 async function fetchWeatherData(district: string): Promise<any> {
-  // In a real app, this would call a weather API
-  // For now, return sample data
-  const weatherData = {
-    district,
-    temperature: "28°C",
-    humidity: "78%",
-    rainfall: "Light rain expected",
-    forecast: [
-      { day: "Today", temp: "32°/24°", condition: "Sunny", rain: "0%" },
-      { day: "Tomorrow", temp: "29°/23°", condition: "Light Rain", rain: "60%" },
-      { day: "Wednesday", temp: "30°/24°", condition: "Cloudy", rain: "20%" }
-    ],
-    farmingAdvice: "Good conditions for planting vegetables. Delay irrigation due to expected rainfall."
+  try {
+    // Get district coordinates
+    const districtData = getDistrictByValue(district);
+    if (!districtData) {
+      throw new Error(`District ${district} not found`);
+    }
+
+    const { latitude, longitude } = districtData;
+    
+    // Call Open-Meteo weather API
+    const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,precipitation,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,weather_code&timezone=Asia/Kolkata&forecast_days=7`;
+    
+    const response = await fetch(weatherUrl);
+    if (!response.ok) {
+      throw new Error(`Weather API error: ${response.statusText}`);
+    }
+    
+    const weatherApiData = await response.json();
+    
+    // Process the API response
+    const current = weatherApiData.current;
+    const daily = weatherApiData.daily;
+    
+    // Create forecast array
+    const forecast = daily.time.slice(0, 5).map((date: string, index: number) => ({
+      day: index === 0 ? "Today" : index === 1 ? "Tomorrow" : new Date(date).toLocaleDateString('en-US', { weekday: 'short' }),
+      temp: `${Math.round(daily.temperature_2m_max[index])}°/${Math.round(daily.temperature_2m_min[index])}°`,
+      condition: getWeatherDescription(daily.weather_code[index]),
+      rain: `${Math.round(daily.precipitation_sum[index])}mm`
+    }));
+
+    // Generate farming advice based on weather conditions
+    const farmingAdvice = generateFarmingAdvice(current, daily, districtData);
+    
+    const weatherData = {
+      district: districtData.label,
+      temperature: `${Math.round(current.temperature_2m)}°C`,
+      humidity: `${Math.round(current.relative_humidity_2m)}%`,
+      rainfall: current.precipitation > 0 ? `${current.precipitation}mm currently` : "No current rainfall",
+      windSpeed: `${Math.round(current.wind_speed_10m)} km/h`,
+      forecast,
+      farmingAdvice,
+      rawData: weatherApiData // Keep raw data for advanced processing
+    };
+    
+    return await storage.createWeatherData(weatherData);
+  } catch (error) {
+    console.error('Weather API error:', error);
+    
+    // Fallback to sample data if API fails
+    const fallbackData = {
+      district,
+      temperature: "28°C",
+      humidity: "78%",
+      rainfall: "Weather data temporarily unavailable",
+      windSpeed: "12 km/h",
+      forecast: [
+        { day: "Today", temp: "32°/24°", condition: "Partly Cloudy", rain: "0mm" },
+        { day: "Tomorrow", temp: "29°/23°", condition: "Light Rain", rain: "5mm" }
+      ],
+      farmingAdvice: "Weather service temporarily unavailable. Please check local conditions and follow general seasonal guidelines.",
+      isTemporary: true
+    };
+    
+    return await storage.createWeatherData(fallbackData);
+  }
+}
+
+function getWeatherDescription(weatherCode: number): string {
+  // WMO Weather interpretation codes (WW)
+  const weatherCodes: { [key: number]: string } = {
+    0: "Clear sky",
+    1: "Mainly clear",
+    2: "Partly cloudy", 
+    3: "Overcast",
+    45: "Fog",
+    48: "Depositing rime fog",
+    51: "Light drizzle",
+    53: "Moderate drizzle",
+    55: "Dense drizzle",
+    56: "Light freezing drizzle",
+    57: "Dense freezing drizzle",
+    61: "Slight rain",
+    63: "Moderate rain",
+    65: "Heavy rain",
+    66: "Light freezing rain",
+    67: "Heavy freezing rain",
+    71: "Slight snowfall",
+    73: "Moderate snowfall",
+    75: "Heavy snowfall",
+    77: "Snow grains",
+    80: "Slight rain showers",
+    81: "Moderate rain showers",
+    82: "Violent rain showers",
+    85: "Slight snow showers",
+    86: "Heavy snow showers",
+    95: "Thunderstorm",
+    96: "Thunderstorm with slight hail",
+    99: "Thunderstorm with heavy hail"
   };
   
-  return await storage.createWeatherData(weatherData);
+  return weatherCodes[weatherCode] || "Unknown";
+}
+
+function generateFarmingAdvice(current: any, daily: any, districtData: any): string {
+  const temp = current.temperature_2m;
+  const humidity = current.relative_humidity_2m;
+  const precipitation = current.precipitation;
+  const upcomingRain = daily.precipitation_sum.slice(0, 3).reduce((sum: number, rain: number) => sum + rain, 0);
+  const climate = districtData.climate;
+  const currentMonth = new Date().getMonth() + 1;
+  
+  let advice = "";
+  
+  // Temperature-based advice
+  if (temp > 35) {
+    advice += "High temperature alert: Provide shade for crops, increase irrigation frequency. ";
+  } else if (temp < 20) {
+    advice += "Cool weather: Good for leafy vegetables and cool-season crops. ";
+  } else {
+    advice += "Optimal temperature range for most Kerala crops. ";
+  }
+  
+  // Rainfall-based advice
+  if (upcomingRain > 50) {
+    advice += "Heavy rain expected: Ensure proper drainage, delay fertilizer application. ";
+  } else if (upcomingRain > 10) {
+    advice += "Moderate rain expected: Good for transplanting, reduce irrigation. ";
+  } else if (upcomingRain < 2) {
+    advice += "Dry period ahead: Increase irrigation, mulch around plants. ";
+  }
+  
+  // Humidity-based advice
+  if (humidity > 80) {
+    advice += "High humidity: Monitor for fungal diseases, ensure good air circulation. ";
+  } else if (humidity < 50) {
+    advice += "Low humidity: Increase watering frequency, consider misting for sensitive plants. ";
+  }
+  
+  // Climate-specific advice
+  if (climate === "coastal") {
+    advice += "Coastal area: Watch for salt damage, use salt-tolerant varieties. ";
+  } else if (climate === "highland") {
+    advice += "Highland area: Good conditions for spices and plantation crops. ";
+  }
+  
+  // Seasonal advice
+  if (currentMonth >= 6 && currentMonth <= 9) {
+    advice += "Monsoon season: Ideal for rice planting and water-loving crops.";
+  } else if (currentMonth >= 10 && currentMonth <= 2) {
+    advice += "Post-monsoon: Perfect for vegetables and cool-season crops.";
+  } else {
+    advice += "Pre-monsoon: Focus on water conservation and heat-tolerant crops.";
+  }
+  
+  return advice;
 }
 
 function isWeatherDataStale(weather: any): boolean {

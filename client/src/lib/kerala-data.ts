@@ -3,6 +3,8 @@ export interface District {
   label: string;
   region: 'north' | 'central' | 'south';
   climate: 'coastal' | 'midland' | 'highland';
+  latitude: number;
+  longitude: number;
 }
 
 export interface LandType {
@@ -30,24 +32,24 @@ export interface ExperienceLevel {
 // Kerala Districts with geographical and climatic information
 export const KERALA_DISTRICTS: District[] = [
   // Northern Kerala
-  { value: "kasaragod", label: "Kasaragod", region: "north", climate: "coastal" },
-  { value: "kannur", label: "Kannur", region: "north", climate: "coastal" },
-  { value: "wayanad", label: "Wayanad", region: "north", climate: "highland" },
-  { value: "kozhikode", label: "Kozhikode", region: "north", climate: "coastal" },
-  { value: "malappuram", label: "Malappuram", region: "north", climate: "midland" },
+  { value: "kasaragod", label: "Kasaragod", region: "north", climate: "coastal", latitude: 12.4996, longitude: 74.9869 },
+  { value: "kannur", label: "Kannur", region: "north", climate: "coastal", latitude: 11.8745, longitude: 75.3704 },
+  { value: "wayanad", label: "Wayanad", region: "north", climate: "highland", latitude: 11.6854, longitude: 76.1320 },
+  { value: "kozhikode", label: "Kozhikode", region: "north", climate: "coastal", latitude: 11.2588, longitude: 75.7804 },
+  { value: "malappuram", label: "Malappuram", region: "north", climate: "midland", latitude: 11.0510, longitude: 76.0711 },
   
   // Central Kerala
-  { value: "palakkad", label: "Palakkad", region: "central", climate: "midland" },
-  { value: "thrissur", label: "Thrissur", region: "central", climate: "coastal" },
-  { value: "ernakulam", label: "Ernakulam", region: "central", climate: "coastal" },
-  { value: "idukki", label: "Idukki", region: "central", climate: "highland" },
-  { value: "kottayam", label: "Kottayam", region: "central", climate: "midland" },
+  { value: "palakkad", label: "Palakkad", region: "central", climate: "midland", latitude: 10.7867, longitude: 76.6548 },
+  { value: "thrissur", label: "Thrissur", region: "central", climate: "coastal", latitude: 10.5276, longitude: 76.2144 },
+  { value: "ernakulam", label: "Ernakulam", region: "central", climate: "coastal", latitude: 9.9312, longitude: 76.2673 },
+  { value: "idukki", label: "Idukki", region: "central", climate: "highland", latitude: 9.9100, longitude: 76.9700 },
+  { value: "kottayam", label: "Kottayam", region: "central", climate: "midland", latitude: 9.5916, longitude: 76.5222 },
   
   // Southern Kerala
-  { value: "alappuzha", label: "Alappuzha", region: "south", climate: "coastal" },
-  { value: "pathanamthitta", label: "Pathanamthitta", region: "south", climate: "midland" },
-  { value: "kollam", label: "Kollam", region: "south", climate: "coastal" },
-  { value: "thiruvananthapuram", label: "Thiruvananthapuram", region: "south", climate: "coastal" }
+  { value: "alappuzha", label: "Alappuzha", region: "south", climate: "coastal", latitude: 9.4981, longitude: 76.3388 },
+  { value: "pathanamthitta", label: "Pathanamthitta", region: "south", climate: "midland", latitude: 9.2648, longitude: 76.7870 },
+  { value: "kollam", label: "Kollam", region: "south", climate: "coastal", latitude: 8.8932, longitude: 76.6141 },
+  { value: "thiruvananthapuram", label: "Thiruvananthapuram", region: "south", climate: "coastal", latitude: 8.5241, longitude: 76.9366 }
 ];
 
 // Land Types in Kerala Agriculture
