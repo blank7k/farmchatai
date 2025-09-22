@@ -1,0 +1,69 @@
+Goal: Build a ChatGPT-like conversational interface for Kerala farmers that is simple, farmer-friendly, and mobile-first.
+
+UI Style:
+
+Looks like ChatGPT (clean chat interface, dark + light mode toggle).
+
+Farmers type or use voice input in Malayalam/English.
+
+AI assistant replies in simple language with icons/illustrations.
+
+Large, farmer-friendly buttons and icons.
+
+Core Features (Tabs / Sections):
+
+AI Chat Tab (Main Chat – like ChatGPT)
+
+Farmers can ask any farming-related question (crop care, fertilizer use, pest control, irrigation, etc.).
+
+Voice input option + AI replies with both text + voice playback (for non-readers).
+
+Local language (Malayalam) support.
+
+Smart Suggestions Tab (Proactive Guidance)
+
+AI automatically suggests what to do today / this week (planting, watering, spraying, harvesting).
+
+Based on weather reports, crop type, and local data.
+
+Push notifications + alerts for urgent tasks (e.g., “Heavy rain expected – cover seedlings” or “Best day to sell tomatoes in local market”).
+
+Weather & Alerts Tab
+
+Real-time weather updates (rain, temperature, wind).
+
+AI gives recommendations based on weather (e.g., “Delay irrigation today, rain expected”).
+
+Wildlife conflict alerts and crop protection tips.
+
+Market & Labor Tab
+
+Daily market price alerts for major crops in Kerala.
+
+Guidance on best time to sell.
+
+Access to labor cost calculators and nearby service providers (equipment rental, custom hiring centers).
+
+Task scheduling assistant.
+
+Community Tab
+
+Q&A forum where farmers can share experiences.
+
+AI-assisted summaries of discussions.
+
+Farmers can follow up with questions inside the chat.
+
+Special Requirements:
+
+Offline support (PWA-lite) so farmers can still see last saved advice without internet.
+
+Voice-first experience (tap mic → ask → get answer).
+
+Push Notifications for weather alerts, urgent crop actions, market price drops.
+
+Icons + cards UI instead of long text (simple, visual guidance).
+
+Colors: Green + earthy tones (farmer-friendly).
+
+Font: Simple, large, easy to read (like Poppins or Nunito).
